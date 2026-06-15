@@ -14,6 +14,7 @@ def home(request):
 
 from app1.models import Event
 
+@login_required(login_url='signin')
 def events(request):
     """Show a simple list of events from the database."""
     # Fetch events from Database
@@ -21,6 +22,7 @@ def events(request):
     
     return render(request, 'events.html', {'events': all_events})
 
+@login_required(login_url='signin')
 def event_details(request, event_id):
     """Show detailed page for a single event."""
     event = get_object_or_404(Event, pk=event_id)
@@ -75,6 +77,7 @@ def create_event(request):
 
 from app1.models import Event, Booking
 
+@login_required(login_url='signin')
 def booking(request):
     """Display booking form and process bookings saving them to database."""
     message = None
@@ -139,6 +142,7 @@ from io import BytesIO
 import base64
 from app1.models import Booking
 
+@login_required(login_url='signin')
 def booking_confirmation(request, booking_id):
     """Generate QR code and show ticket."""
     try:
@@ -293,6 +297,7 @@ from django.utils import timezone
 from django.db.models import Sum
 from app1.models import Expense
 
+@login_required(login_url='signin')
 def ai_agent(request):
     """
     Budget Planner AI Agent & Expense Dashboard.
@@ -528,6 +533,9 @@ def chat_api(request):
     Dedicated API endpoint for the Global Chat Widget and Voice Assistant.
     Supports modes: 'general', 'booking'.
     """
+    if not request.user.is_authenticated:
+        return JsonResponse({'reply': 'Please sign in or sign up first to chat.'}, status=401)
+
     if request.method == 'POST':
         try:
             print("--- Chat API Request Received ---")
@@ -658,6 +666,7 @@ def chat_api(request):
     return JsonResponse({'error': 'Invalid request method'}, status=400)
 
 
+@login_required(login_url='signin')
 def payment_page(request, booking_id):
     """Display payment page for a booking."""
     try:
@@ -672,6 +681,7 @@ def payment_page(request, booking_id):
         return HttpResponse("Booking not found", status=404)
 
 
+@login_required(login_url='signin')
 def process_payment(request, booking_id):
     """Process simulated payment and update booking status."""
     if request.method == 'POST':

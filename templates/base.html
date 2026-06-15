@@ -240,14 +240,14 @@
         <span></span>
       </button>
       <ul class="nav-list">
+        {% if user.is_authenticated %}
         <li class="nav-item"><a href="/" class="nav-link">Home</a></li>
         <li class="nav-item"><a href="{% url 'events' %}" class="nav-link">Events</a></li>
-        {% if user.is_authenticated and user.is_superuser %}
+        {% if user.is_superuser %}
         <li class="nav-item"><a href="{% url 'create_event' %}" class="nav-link">Create</a></li>
         {% endif %}
         <li class="nav-item"><a href="/booking/" class="nav-link">Booking</a></li>
         <li class="nav-item"><a href="/ai-agent/" class="nav-link">AI Agent</a></li>
-        {% if user.is_authenticated %}
         <li class="nav-item"><a href="/profile/" class="nav-link">Profile</a></li>
         <li class="nav-item mobile-only"><a href="/logout/" class="nav-link">Logout</a></li>
         {% else %}
@@ -313,7 +313,9 @@
     });
   </script>
 
+  {% if user.is_authenticated %}
   {% include 'includes/chat_widget.html' %}
+  {% endif %}
 </body>
 
 </html>
