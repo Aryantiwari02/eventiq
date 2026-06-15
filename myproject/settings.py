@@ -17,8 +17,11 @@ import os
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Gemini AI Configuration
-from dotenv import load_dotenv
-load_dotenv(BASE_DIR / '.env')
+try:
+    from dotenv import load_dotenv
+    load_dotenv(BASE_DIR / '.env')
+except ImportError:
+    pass
 
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 
@@ -27,12 +30,17 @@ GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-t5@374wd541823&#9#(=nl4-*88r46vp7r=in5(p$ed&jx731n'
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-t5@374wd541823&#9#(=nl4-*88r46vp7r=in5(p$ed&jx731n')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = ['*']
+
+# CSRF trusted origins for Vercel deployment (fixes 403/500 on forms)
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.vercel.app',
+]
 
 
 # Application definition
@@ -49,6 +57,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Serve static files in production
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -80,12 +89,23 @@ WSGI_APPLICATION = 'myproject.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+# Use /tmp for SQLite on Vercel (writable directory in serverless)
+import dj_database_url
+
+if os.environ.get('VERCEL'):
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': '/tmp/db.sqlite3',
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 
 # Password validation
@@ -122,13 +142,20 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+
+# Where collectstatic will place files (used by Vercel build)
+STATIC_ROOT = BASE_DIR / 'staticfiles_build' / 'static'
 
 # Additional locations the staticfiles app will search
-from pathlib import Path as _Path
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
+
+# WhiteNoise compressed static file storage (production only)
+if not DEBUG:
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
 # Media Files
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
